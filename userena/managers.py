@@ -79,7 +79,10 @@ class UserenaManager(UserManager):
             assign(perm[0], new_user, new_user)
 
         if send_email:
-            userena_profile.send_activation_email()
+            try:
+                userena_profile.send_activation_email()
+            except:
+                pass
  
         return new_user
 

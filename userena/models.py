@@ -103,7 +103,10 @@ class UserenaSignup(models.Model):
         self.save()
 
         # Send email for activation
-        self.send_confirmation_email()
+        try:
+            self.send_confirmation_email()
+        except:
+            pass
 
     def send_confirmation_email(self):
         """
