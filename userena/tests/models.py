@@ -3,7 +3,7 @@ from django.contrib.sites.models import Site
 from django.core import mail
 from django.conf import settings
 
-from userena.models import UserenaSignup, upload_to_mugshot
+from userena.models import UserenaSignup
 from userena import settings as userena_settings
 from userena.tests.profiles.test import ProfileTestCase
 from userena.tests.profiles.models import Profile
@@ -19,26 +19,6 @@ class UserenaSignupModelTests(ProfileTestCase):
                  'email': 'alice@example.com'}
 
     fixtures = ['users', 'profiles']
-
-    def test_upload_mugshot(self):
-        """
-        Test the uploaded path of mugshots
-
-        TODO: What if a image get's uploaded with no extension?
-
-        """
-        user = User.objects.get(pk=1)
-        filename = 'my_avatar.png'
-        path = upload_to_mugshot(user.get_profile(), filename)
-
-        # Path should be changed from the original
-        self.failIfEqual(filename, path)
-
-        # Check if the correct path is returned
-        MUGSHOT_RE = re.compile('^%(mugshot_path)s[a-f0-9]{10}.png$' %
-                                {'mugshot_path': userena_settings.USERENA_MUGSHOT_PATH})
-
-        self.failUnless(MUGSHOT_RE.search(path))
 
     def test_stringification(self):
         """
@@ -102,70 +82,11 @@ class BaseProfileModelTest(ProfileTestCase):
     """ Test the ``BaseProfile`` model """
     fixtures = ['users', 'profiles']
 
-    def test_mugshot_url(self):
-        """ The user has uploaded it's own mugshot. This should be returned. """
-        profile = Profile.objects.get(pk=1)
-        profile.mugshot = 'fake_image.png'
-        profile.save()
-
-        profile = Profile.objects.get(pk=1)
-        self.failUnlessEqual(profile.get_mugshot_url(),
-                             settings.MEDIA_URL + 'fake_image.png')
-
     def test_stringification(self):
         """ Profile should return a human-readable name as an object """
         profile = Profile.objects.get(pk=1)
         self.failUnlessEqual(profile.__unicode__(),
                              'Profile of %s' % profile.user.username)
-
-    def test_get_mugshot_url_without_gravatar(self):
-        """
-        Test if the correct mugshot is returned for the user when
-        ``USERENA_MUGSHOT_GRAVATAR`` is set to ``False``.
-
-        """
-        # This user has no mugshot, and gravatar is disabled. And to make
-        # matters worse, there isn't even a default image.
-        userena_settings.USERENA_MUGSHOT_GRAVATAR = False
-        profile = Profile.objects.get(pk=1)
-        self.failUnlessEqual(profile.get_mugshot_url(), None)
-
-        # There _is_ a default image
-        userena_settings.USERENA_MUGSHOT_DEFAULT = 'http://example.com'
-        profile = Profile.objects.get(pk=1)
-        self.failUnlessEqual(profile.get_mugshot_url(), 'http://example.com')
-
-        # Settings back to default
-        userena_settings.USERENA_MUGSHOT_GRAVATAR = True
-
-    def test_get_mugshot_url_with_gravatar(self):
-        """
-        Test if the correct mugshot is returned when the user makes use of gravatar.
-
-        """
-        template = 'http://www.gravatar.com/avatar/%(hash)s?s=%(size)s&d=%(default)s'
-        profile = Profile.objects.get(pk=1)
-
-        gravatar_hash = hashlib.md5(profile.user.email).hexdigest()
-
-        # Test with the default settings
-        self.failUnlessEqual(profile.get_mugshot_url(),
-                             template % {'hash': gravatar_hash,
-                                         'size': userena_settings.USERENA_MUGSHOT_SIZE,
-                                         'default': userena_settings.USERENA_MUGSHOT_DEFAULT})
-
-        # Change userena settings
-        userena_settings.USERENA_MUGSHOT_SIZE = 180
-        userena_settings.USERENA_MUGSHOT_DEFAULT = '404'
-
-        self.failUnlessEqual(profile.get_mugshot_url(),
-                             template % {'hash': gravatar_hash,
-                                         'size': userena_settings.USERENA_MUGSHOT_SIZE,
-                                         'default': userena_settings.USERENA_MUGSHOT_DEFAULT})
-
-        # Settings back to default
-        userena_settings.USERENA_MUGSHOT_SIZE = 80
-        userena_settings.USERENA_MUGSHOT_DEFAULT = 'identicon'
 
     def test_get_full_name_or_username(self):
         """ Test if the full name or username are returned correcly """

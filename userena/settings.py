@@ -71,10 +71,6 @@ USERENA_MUGSHOT_CROP_TYPE = getattr(settings,
                                     'USERENA_MUGSHOT_CROP_TYPE',
                                     'smart')
 
-USERENA_MUGSHOT_PATH = getattr(settings,
-                               'USERENA_MUGSHOT_PATH',
-                               'mugshots/')
-
 USERENA_DEFAULT_PRIVACY = getattr(settings,
                                   'USERENA_DEFAULT_PRIVACY',
                                   'registered')
